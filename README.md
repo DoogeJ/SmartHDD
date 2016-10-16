@@ -14,6 +14,12 @@ Modifications by me:
 ## License / Copyright:
 Please see the '**LICENSE**' file.
 
+# Installing
+Get the latest release here: [https://github.com/DoogeJ/SmartHDD/releases](https://github.com/DoogeJ/SmartHDD/releases).
+
+## Reporting bugs or feature requests
+Please use the GitHub issue-system for bugs or feature requests: [https://github.com/DoogeJ/SmartHDD/issues](https://github.com/DoogeJ/SmartHDD/issues).
+
 ## Note by the original author:
 > Tested against Crystal Disk Info 5.3.1 and HD Tune Pro 3.5 on 15 Feb 2013.  
 > Findings; I do not trust the individual smart register "OK" status reported back frm the drives.  
