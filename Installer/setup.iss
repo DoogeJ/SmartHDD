@@ -24,6 +24,8 @@ OutputBaseFilename=Install_{#MyAppName}_{#MyAppVersion}
 SetupIconFile=..\Visualpharm-Hardware-Hard-disk.ico
 Compression=lzma
 SolidCompression=yes
+UsePreviousGroup=no
+UsePreviousAppDir=no
 
 ; we will need administrator privileges to copy to program files and / or install prerequirements
 PrivilegesRequired=admin
