@@ -35,8 +35,10 @@ This application was written using Visual Studio 2015 and .NET Framework 4.5.2 o
 It will most likely build fine on different configurations, but might require some modifications.
 
 ## Updating the version number
-The version number is stored in two locations:
+The version number is stored in four locations:
 * In the projects assembly info file: **'SmartHDD\Properties\AssemblyInfo.cs'**
+* In the program header: **'SmartHDD\Program.cs'**
+* In the projects C# project file: **'SmartHDD\SmartHDD.csproj'**
 * In the installer setup.iss file (only used for the installer): **'Installer\setup.iss'**
 
 ## Building the installer
