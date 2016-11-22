@@ -1,7 +1,7 @@
 #define use_dotnetfx46
 
 #define MyAppName "SmartHDD"
-#define MyAppVersion "1.0.0.0"
+#define MyAppVersion "1.0.0.1"
 #define MyAppPublisher "DoogeJ"
 #define MyAppURL "https://github.com/DoogeJ/SmartHDD"
 #define MyAppExeName "SmartHDD.exe"
