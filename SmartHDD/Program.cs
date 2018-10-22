@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management;
 
 /*
@@ -44,6 +45,8 @@ namespace SmartHDD
     {
 
         public int Index { get; set; }
+        public string DeviceId { get; set; }
+        public string InstanceName { get; set; }
         public bool IsOK { get; set; }
         public string Model { get; set; }
         public string Type { get; set; }
@@ -222,34 +225,32 @@ namespace SmartHDD
             {
 
                 // retrieve list of drives on computer (this will return both HDD's and CDROM's and Virtual CDROM's)                    
-                var dicDrives = new Dictionary<int, HDD>();
+                var dicDrives = new List<HDD>();
 
                 var wdSearcher = new ManagementObjectSearcher("SELECT * FROM Win32_DiskDrive");
 
                 // extract model and interface information
-                int iDriveIndex = 0;
                 foreach (ManagementObject drive in wdSearcher.Get())
                 {
                     var hdd = new HDD();
                     hdd.Model = drive["Model"].ToString().Trim();
                     hdd.Type = drive["InterfaceType"].ToString().Trim();
-                    dicDrives.Add(iDriveIndex, hdd);
-                    iDriveIndex++;
+                    hdd.DeviceId = drive["DeviceID"].ToString().Trim();
+                    hdd.InstanceName = drive["PNPDeviceID"].ToString().Trim();
+                    dicDrives.Add(hdd);
                 }
 
                 var pmsearcher = new ManagementObjectSearcher("SELECT * FROM Win32_PhysicalMedia");
 
                 // retrieve hdd serial number
-                iDriveIndex = 0;
                 foreach (ManagementObject drive in pmsearcher.Get())
                 {
-                    // because all physical media will be returned we need to exit
-                    // after the hard drives serial info is extracted
-                    if (iDriveIndex >= dicDrives.Count)
-                        break;
+                    var tag = drive["Tag"].ToString().Trim();
 
-                    dicDrives[iDriveIndex].Serial = drive["SerialNumber"] == null ? "None" : drive["SerialNumber"].ToString().Trim();
-                    iDriveIndex++;
+                    var dicDrive = dicDrives.FirstOrDefault(d => d.DeviceId.Equals(tag, StringComparison.InvariantCultureIgnoreCase));
+
+                    if (dicDrive != null)
+                        dicDrive.Serial = drive["SerialNumber"] == null ? "None" : drive["SerialNumber"].ToString().Trim();
                 }
 
                 // get wmi access to hdd 
@@ -258,18 +259,27 @@ namespace SmartHDD
 
                 // check if SMART reports the drive is failing
                 searcher.Query = new ObjectQuery("Select * from MSStorageDriver_FailurePredictStatus");
-                iDriveIndex = 0;
                 foreach (ManagementObject drive in searcher.Get())
                 {
-                    dicDrives[iDriveIndex].IsOK = (bool)drive.Properties["PredictFailure"].Value == false;
-                    iDriveIndex++;
+                    var instanceName = drive["InstanceName"].ToString().Trim();
+
+                    var dicDrive = dicDrives.FirstOrDefault(d => instanceName.StartsWith(d.InstanceName, StringComparison.InvariantCultureIgnoreCase));
+
+                    if (dicDrive != null)
+                        dicDrive.IsOK = (bool)drive.Properties["PredictFailure"].Value == false;
                 }
 
                 // retrive attribute flags, value worste and vendor data information
                 searcher.Query = new ObjectQuery("Select * from MSStorageDriver_FailurePredictData");
-                iDriveIndex = 0;
                 foreach (ManagementObject data in searcher.Get())
                 {
+                    var instanceName = data["InstanceName"].ToString().Trim();
+
+                    var dicDrive = dicDrives.FirstOrDefault(d => instanceName.StartsWith(d.InstanceName, StringComparison.InvariantCultureIgnoreCase));
+
+                    if (dicDrive == null)
+                        continue;
+
                     Byte[] bytes = (Byte[])data.Properties["VendorSpecific"].Value;
                     for (int i = 0; i < 30; ++i)
                     {
@@ -287,7 +297,7 @@ namespace SmartHDD
                             int vendordata = BitConverter.ToInt32(bytes, i * 12 + 7);
                             if (id == 0) continue;
 
-                            var attr = dicDrives[iDriveIndex].Attributes[id];
+                            var attr = dicDrive.Attributes[id];
                             attr.Current = value;
                             attr.Worst = worst;
                             attr.Data = vendordata;
@@ -298,15 +308,20 @@ namespace SmartHDD
                             // given key does not exist in attribute collection (attribute not in the dictionary of attributes)
                         }
                     }
-                    iDriveIndex++;
                 }
 
                 // retreive threshold values foreach attribute
                 searcher.Query = new ObjectQuery("Select * from MSStorageDriver_FailurePredictThresholds");
-                iDriveIndex = 0;
 
                 foreach (ManagementObject data in searcher.Get())
                 {
+                    var instanceName = data["InstanceName"].ToString().Trim();
+
+                    var dicDrive = dicDrives.FirstOrDefault(d => instanceName.StartsWith(d.InstanceName, StringComparison.InvariantCultureIgnoreCase));
+
+                    if (dicDrive == null)
+                        continue;
+
                     Byte[] bytes = (Byte[])data.Properties["VendorSpecific"].Value;
                     for (int i = 0; i < 30; ++i)
                     {
@@ -317,7 +332,7 @@ namespace SmartHDD
                             int thresh = bytes[i * 12 + 3];
                             if (id == 0) continue;
 
-                            var attr = dicDrives[iDriveIndex].Attributes[id];
+                            var attr = dicDrive.Attributes[id];
                             attr.Threshold = thresh;
                         }
                         catch
@@ -325,8 +340,6 @@ namespace SmartHDD
                             // given key does not exist in attribute collection (attribute not in the dictionary of attributes)
                         }
                     }
-
-                    iDriveIndex++;
                 }
 
                 WriteFullLine("┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐");
@@ -338,14 +351,14 @@ namespace SmartHDD
                 {
 
                     WriteFullLine("┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐");
-                    WriteFullLine(string.Format("{0, -155}", string.Format("│ DRIVE ({0}): " + drive.Value.Model + " (S/N: " + drive.Value.Serial + ") - " + drive.Value.Type, ((drive.Value.IsOK) ? "OK" : "BAD"))) + "│");
+                    WriteFullLine(string.Format("{0, -155}", string.Format("│ DRIVE ({0}): " + drive.Model + " (S/N: " + drive.Serial + ") - " + drive.Type, ((drive.IsOK) ? "OK" : "BAD"))) + "│");
                     WriteFullLine("├──────────────────────────────────────────────────────────────────────────────────────────────┬───────────┬───────────┬───────────┬──────────────┬────────┤");
                     WriteFullLine("│ ID                                                                                           │   Current │     Worst │ Threshold │         Data │ Status │");
 
                     bool oddLine = false;
                     ConsoleColor rowColor = ConsoleColor.DarkBlue;
 
-                    foreach (var attr in drive.Value.Attributes)
+                    foreach (var attr in drive.Attributes)
                     {
 
                         if (attr.Value.HasData)
