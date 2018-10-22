@@ -31,7 +31,7 @@ Please use the GitHub issue-system for bugs or feature requests: [https://github
 This section is focussed on development of SmartHDD, in case you want to build your own version(s).
 
 ## Environment
-This application was written using Visual Studio 2015 and .NET Framework 4.5.2 on Windows 10 1511.  
+This application was written using Visual Studio 2017 and .NET Framework 4.5.2 on Windows 10 1803.  
 It will most likely build fine on different configurations, but might require some modifications.
 
 ## Updating the version number

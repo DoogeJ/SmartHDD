@@ -36,6 +36,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
     *** END ORIGINAL COPYRIGHT NOTICE ***
 
+Much thanks to:
+- Chris Kaczor aka @ckaczor on GitHub
+
 */
 
 namespace SmartHDD
@@ -343,7 +346,7 @@ namespace SmartHDD
                 }
 
                 WriteFullLine("┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐");
-                WriteFullLine("│ SmartHDD by DoogeJ - https://github.com/DoogeJ/SmartHDD  - (c) 2016 Jaap-Willem Dooge, 2013 Llewellyn Kruger                             version 1.0.0.1 │");
+                WriteFullLine("│ SmartHDD by DoogeJ - https://github.com/DoogeJ/SmartHDD  - (c) 2016 Jaap-Willem Dooge, 2013 Llewellyn Kruger                             version 1.1.0.0 │");
                 WriteFullLine("└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘");
                 Console.WriteLine();
 
